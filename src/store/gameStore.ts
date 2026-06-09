@@ -9,7 +9,7 @@ import {
   Property,
 } from '../types/game';
 import { DOOMSDAY_EVENTS } from '../events/doomsdayEvents';
-import { ActiveRandomEvent, Delta, EventKind, EventOutcome, RandomEventDefinition } from '../types/randomEvent';
+import { ActiveRandomEvent, CoreAttribute, Delta, EventKind, EventOutcome, RandomEventDefinition } from '../types/randomEvent';
 
 const INITIAL_DATE = '2027.5.1';
 const DOOMSDAY_DATE = '2027.5.6';
@@ -125,7 +125,7 @@ const DOOMSDAY_MESSAGE_TEMPLATES = [
 
 const getNextDate = (currentDate: string): string => {
   const parts = currentDate.split('.');
-  let year = parseInt(parts[0]);
+  const year = parseInt(parts[0]);
   let month = parseInt(parts[1]);
   let day = parseInt(parts[2]);
 
@@ -351,6 +351,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   financePrices: calcFinancePrices(INITIAL_DATE),
   archivedMessages: [],
   currentMessages: [],
+  usedMemoryLocationIds: [],
   logs: [{ id: 'init', date: INITIAL_DATE, time: 8, text: '轮回开始，你回到了末日爆发前...' }],
   isDoomsday: false,
   isDead: false,
@@ -369,7 +370,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { time, sleep, isDead } = get();
     if (isDead) return;
 
-    let newTime = time + hours;
+    const newTime = time + hours;
     if (newTime >= 24) {
       // It's time to sleep
       sleep();
@@ -566,7 +567,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     if ((stat === 'luck' || stat === 'leadership') && source !== 'randomEvent') {
       return;
     }
-    set((state) => ({ [stat]: Math.min(100, Math.max(0, state[stat] + amount)) } as any));
+    set((state) => ({
+      ...state,
+      [stat]: Math.min(100, Math.max(0, state[stat] + amount)),
+    }));
   },
 
   applyDeltas: (deltas: Delta[]) => {
@@ -752,7 +756,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       { v: 90, name: '高' },
     ];
 
-    const mkChance = (attr: any, v: number, diff: any) =>
+    const mkChance = (attr: CoreAttribute, v: number, diff: 0 | 1 | 2 | 3) =>
       computeSuccessChance(
         DOOMSDAY_EVENTS[0],
         attr,
@@ -1039,6 +1043,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     }));
   },
 
+  markMemoryLocationUsed: (locationId: string) => {
+    set((state) => {
+      if (state.usedMemoryLocationIds.includes(locationId)) return state;
+      return { usedMemoryLocationIds: [...state.usedMemoryLocationIds, locationId] };
+    });
+  },
+
   die: (reason: string) => {
     set({ isDead: true, deathReason: reason });
   },
@@ -1065,6 +1076,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       financePrices: calcFinancePrices(INITIAL_DATE),
       archivedMessages: state.currentMessages.filter(m => m.source === 'doomsday'),
       currentMessages: [],
+      usedMemoryLocationIds: [],
       logs: [{ id: Math.random().toString(36).substr(2, 9), date: INITIAL_DATE, time: 8, text: `第 ${state.num + 1} 次轮回开始了...` }],
       isDoomsday: false,
       isDead: false,

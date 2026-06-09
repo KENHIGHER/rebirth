@@ -1,4 +1,4 @@
-import type { ActiveRandomEvent, EventSource, EventKind } from './randomEvent';
+import type { ActiveRandomEvent, Delta, EventSource, EventKind } from './randomEvent';
 
 export interface Message {
   id: string;
@@ -105,6 +105,7 @@ export interface GameState {
   // Messages
   archivedMessages: Message[]; // from past lives
   currentMessages: Message[]; // gained in current life
+  usedMemoryLocationIds: string[];
 
   // Logs
   logs: LogEntry[];
@@ -136,7 +137,7 @@ export interface GameState {
   buyItem: (itemId: string, name: string, quantity: number, price: number) => void;
   sellItem: (itemId: string, quantity: number, price: number) => void;
   consumeItem: (itemId: string, quantity: number) => boolean;
-  applyDeltas: (deltas: Array<{ type: string; [k: string]: any }>) => void;
+  applyDeltas: (deltas: Delta[]) => void;
   startRandomEvent: (source: EventSource) => void;
   resolveRandomEvent: (choiceId: string) => void;
   closeRandomEvent: () => void;
@@ -148,6 +149,7 @@ export interface GameState {
   sellFinance: (assetId: string, quantity: number, price: number) => void;
   addMessage: (msg: Message) => void;
   addLog: (text: string) => void;
+  markMemoryLocationUsed: (locationId: string) => void;
   setHasExercisedToday: (val: boolean) => void;
   setBalanceExerciseCooldown: (val: number) => void;
   applyDeveloperState: (patch: {

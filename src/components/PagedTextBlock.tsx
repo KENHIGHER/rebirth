@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PagedTextBlockProps {
@@ -26,10 +26,15 @@ const PagedTextBlock: React.FC<PagedTextBlockProps> = ({
 }) => {
   const pages = useMemo(() => splitPages(text, pageChars), [text, pageChars]);
   const [page, setPage] = useState(0);
+  const safePage = Math.min(page, pages.length - 1);
+
+  useEffect(() => {
+    setPage(0);
+  }, [text, pageChars]);
 
   return (
     <div className={className}>
-      <div className={textClassName}>{pages[page]}</div>
+      <div className={textClassName}>{pages[safePage]}</div>
       {pages.length > 1 && (
         <div className="mt-2 flex items-center justify-between text-[10px] text-zinc-500">
           <button
@@ -40,7 +45,7 @@ const PagedTextBlock: React.FC<PagedTextBlockProps> = ({
             <ChevronLeft size={12} />
             上一页
           </button>
-          <span className="font-mono">{page + 1}/{pages.length}</span>
+          <span className="font-mono">{safePage + 1}/{pages.length}</span>
           <button
             onClick={() => setPage((v) => Math.min(pages.length - 1, v + 1))}
             disabled={page === pages.length - 1}

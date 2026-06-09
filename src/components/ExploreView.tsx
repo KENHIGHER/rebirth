@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import RandomEventModal from './RandomEventModal';
+import SceneBanner from './SceneBanner';
+
+type ExploreLocation = {
+  id: string;
+  name: string;
+  risk: string;
+  drops: string;
+  hint: string;
+};
 
 const BASE_LOCATIONS = [
   { id: 'supermarket', name: '废弃超市', risk: '低', drops: '食物、水、日用杂物', hint: '' },
@@ -27,7 +36,7 @@ const ExploreView: React.FC = () => {
 
   const locations = [...BASE_LOCATIONS, ...unlockedLocations];
 
-  const handleExplore = (loc: any) => {
+  const handleExplore = (loc: ExploreLocation) => {
     if (time > 16) {
       setFeedback('时间太晚了，天黑前无法返回安全屋，你不敢出门。');
       return;
@@ -55,8 +64,16 @@ const ExploreView: React.FC = () => {
   return (
     <div className="space-y-4 h-full flex flex-col">
       <div className="bg-black p-4 rounded-lg border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] flex-1 overflow-y-auto custom-scrollbar">
+        <SceneBanner
+          image="explore-ruins"
+          title="废墟搜索"
+          subtitle="带够食物和水，天黑前回来。外面每一条街都可能变成事件。"
+          tone="red"
+        />
+        <div className="mt-4">
         <h2 className="text-lg font-bold text-red-500 mb-2 font-serif tracking-widest">外出探索 (耗时 8h)</h2>
         <p className="text-sm text-red-400/70 mb-4">高风险高回报。必须在16:00前出发。</p>
+        </div>
 
         <div className="space-y-3 mb-6">
           {locations.map((loc) => (
@@ -64,7 +81,7 @@ const ExploreView: React.FC = () => {
               key={loc.id}
               onClick={() => handleExplore(loc)}
               disabled={time > 16 || !!activeEvent}
-              className="w-full text-left bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed p-3 rounded border border-red-900/30 transition-colors"
+              className="w-full text-left bg-zinc-900/90 hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed p-3 rounded border border-red-900/30 hover:border-red-700/70 transition-all shadow-[0_10px_30px_rgba(0,0,0,0.18)]"
             >
               <div className="flex justify-between items-center mb-1">
                 <span className="font-bold text-red-200">{loc.name}</span>

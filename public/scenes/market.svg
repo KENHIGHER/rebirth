@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-label="underground market">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1f1307"/>
+      <stop offset="0.52" stop-color="#111827"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="50%" cy="10%" r="50%">
+      <stop offset="0" stop-color="#facc15" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#facc15" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="960" height="360" fill="url(#bg)"/>
+  <rect width="960" height="360" fill="url(#lamp)"/>
+  <path d="M0 286h960v74H0z" fill="#09090b"/>
+  <path d="M88 172h210l34 114H54zm574 0h210l34 114H628z" fill="#27272a"/>
+  <path d="M144 128h98v44h-98zm576 0h98v44h-98z" fill="#3f3f46"/>
+  <path d="M342 104h276l48 182H294z" fill="#18181b"/>
+  <path d="M382 134h196l24 118H358z" fill="#0f172a"/>
+  <path d="M390 144h72v18h-72zm92 0h72v18h-72zm-74 42h120v18H408zm-20 42h160v18H388z" fill="#f59e0b" opacity="0.65"/>
+  <path d="M0 306h960" stroke="#f97316" stroke-opacity="0.35" stroke-width="3"/>
+  <circle cx="182" cy="230" r="24" fill="#7f1d1d"/>
+  <circle cx="774" cy="230" r="24" fill="#78350f"/>
+  <path d="M140 268h96m500 0h96" stroke="#fbbf24" stroke-opacity="0.45" stroke-width="6" stroke-linecap="round"/>
+</svg>

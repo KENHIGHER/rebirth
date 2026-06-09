@@ -1,5 +1,5 @@
 import { ITEMS } from '../types/game';
-import { RandomEventDefinition } from '../types/randomEvent';
+import { RandomEventDefinition, StatKey } from '../types/randomEvent';
 
 const I = ITEMS;
 
@@ -8,7 +8,7 @@ const itemDelta = (itemId: string, amount: number) => {
   return { type: 'item' as const, itemId, itemName: item?.name || itemId, amount };
 };
 
-const statDelta = (key: any, amount: number) => ({ type: 'stat' as const, key, amount });
+const statDelta = (key: StatKey, amount: number) => ({ type: 'stat' as const, key, amount });
 
 export const DOOMSDAY_EVENTS: RandomEventDefinition[] = [
   {

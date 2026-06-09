@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { ScrollText, Clock, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { corruptText } from '../utils/textEffects';
+import SceneBanner from './SceneBanner';
 
 const PAGE_SIZE = 10;
 
@@ -19,6 +20,12 @@ const HomeView: React.FC = () => {
 
   return (
     <div className="space-y-4 h-full flex flex-col">
+      <SceneBanner
+        image="home-city"
+        title={glitch('轮回前夜')}
+        subtitle={glitch('城市还亮着灯，倒计时已经藏进每一条日志里。')}
+        tone="red"
+      />
       <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 flex-1 flex flex-col overflow-hidden">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">

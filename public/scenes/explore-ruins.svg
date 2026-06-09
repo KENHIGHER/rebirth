@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-label="ruined street">
+  <defs>
+    <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b1114"/>
+      <stop offset="0.56" stop-color="#18181b"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+    <radialGradient id="flare" cx="20%" cy="15%" r="45%">
+      <stop offset="0" stop-color="#ef4444" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="960" height="360" fill="url(#dusk)"/>
+  <rect width="960" height="360" fill="url(#flare)"/>
+  <path d="M0 290h960v70H0z" fill="#09090b"/>
+  <path d="M48 92h150v198H48zm194 44h126v154H242zm424-30h126v184H666zm154 58h94v126h-94z" fill="#27272a"/>
+  <path d="M72 124h30v24H72zm54 0h30v24h-30zm0 52h30v24h-30zm146-10h30v24h-30zm52 52h30v24h-30zm368-30h30v24h-30zm52-48h30v24h-30zm0 96h30v24h-30z" fill="#111827"/>
+  <path d="M420 170l88 120H332z" fill="#3f3f46"/>
+  <path d="M516 146l132 144H430z" fill="#18181b"/>
+  <path d="M0 330c136-38 232-16 336-34 146-25 276-54 624 10v54H0z" fill="#18181b"/>
+  <path d="M68 318l126-54m552 52l-98-62m-204 64l58-80" stroke="#7f1d1d" stroke-width="9" stroke-linecap="round" opacity="0.75"/>
+  <circle cx="112" cy="74" r="26" fill="#f97316" opacity="0.5"/>
+</svg>

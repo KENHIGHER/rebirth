@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 
 const splitToPages = (text: string) => {
@@ -18,6 +18,11 @@ const TestReportModal: React.FC = () => {
   const [page, setPage] = useState(0);
 
   const pages = useMemo(() => (report ? splitToPages(report) : []), [report]);
+  const safePage = Math.min(page, Math.max(0, pages.length - 1));
+
+  useEffect(() => {
+    setPage(0);
+  }, [report]);
 
   if (!report) return null;
 
@@ -25,8 +30,8 @@ const TestReportModal: React.FC = () => {
   const canNext = page < pages.length - 1;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-[1px]">
-      <div className="w-[92%] max-w-md bg-zinc-950 border border-zinc-700 rounded-lg overflow-hidden re-pop">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-[1px] p-4">
+      <div className="w-full max-w-md max-h-[calc(100dvh-2rem)] bg-zinc-950 border border-zinc-700 rounded-lg overflow-hidden re-pop">
         <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
           <div className="text-zinc-100 font-bold">测试报告</div>
           <button
@@ -37,11 +42,11 @@ const TestReportModal: React.FC = () => {
           </button>
         </div>
 
-        <div className="p-4 h-[340px] overflow-hidden">
-          <div className="h-[250px] overflow-hidden">
+        <div className="p-4">
+          <div className="max-h-[52dvh] overflow-hidden">
             <div
               className="flex h-full transition-transform duration-300 ease-out"
-              style={{ transform: `translateX(-${page * 100}%)` }}
+              style={{ transform: `translateX(-${safePage * 100}%)` }}
             >
               {pages.map((p, idx) => (
                 <div key={idx} className="w-full flex-shrink-0 pr-2">
@@ -62,7 +67,7 @@ const TestReportModal: React.FC = () => {
               上一页
             </button>
             <div className="text-xs text-zinc-500 font-mono">
-              {pages.length === 0 ? '0/0' : `${page + 1}/${pages.length}`}
+              {pages.length === 0 ? '0/0' : `${safePage + 1}/${pages.length}`}
             </div>
             <button
               onClick={() => setPage((v) => Math.min(pages.length - 1, v + 1))}
@@ -79,4 +84,3 @@ const TestReportModal: React.FC = () => {
 };
 
 export default TestReportModal;
-

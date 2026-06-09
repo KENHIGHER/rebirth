@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { FINANCE_ASSETS, FINANCE_EVENTS, ITEMS, MARKET_EVENTS, Message } from '../types/game';
+import SceneBanner from './SceneBanner';
 
 const LOCATIONS = [
   '证券交易所', '银行', '医院', '黑市', '图书馆', '公司', '政府大楼'
@@ -14,7 +15,19 @@ interface PendingOffer {
 }
 
 const StrollView: React.FC = () => {
-  const { advanceTime, time, addMessage, buyItem, addLog, archivedMessages, addSan, applyDeltas, cash } = useGameStore();
+  const {
+    advanceTime,
+    time,
+    addMessage,
+    buyItem,
+    addLog,
+    archivedMessages,
+    usedMemoryLocationIds,
+    markMemoryLocationUsed,
+    addSan,
+    applyDeltas,
+    cash,
+  } = useGameStore();
   const [feedback, setFeedback] = useState<string>('');
   const [pendingOffer, setPendingOffer] = useState<PendingOffer | null>(null);
 
@@ -23,14 +36,21 @@ const StrollView: React.FC = () => {
     return y * 10000 + m * 100 + day;
   };
 
-  const unlockedLocations = archivedMessages
-    .filter((m) => m.type === 'location' && m.locationName)
-    .map((m) => ({
-      id: m.locationId || m.id,
-      name: m.locationName as string,
-      hint: m.text,
-      isMemory: true,
-    }));
+  const unlockedLocations = Array.from(
+    new Map(
+      archivedMessages
+        .filter((m) => m.type === 'location' && m.locationName)
+        .map((m) => [
+          m.locationId || m.id,
+          {
+            id: m.locationId || m.id,
+            name: m.locationName as string,
+            hint: m.text,
+            isMemory: true,
+          },
+        ]),
+    ).values(),
+  ).filter((location) => !usedMemoryLocationIds.includes(location.id));
 
   const locations = [
     ...unlockedLocations,
@@ -128,15 +148,23 @@ const StrollView: React.FC = () => {
     let resultStr = '';
     if (location.isMemory) {
       const drops = ['food', 'water', 'materials', 'fuel', 'medicine'] as const;
-      const dropId = drops[Math.floor(Math.random() * drops.length)];
-      const item = Object.values(ITEMS).find((i) => i.id === dropId);
-      const qty = 1 + Math.floor(Math.random() * 2);
-      if (item) {
-        buyItem(item.id, item.name, qty, 0);
-        resultStr = `【轮回记忆】你按照前世线索找到了 ${location.name}，带回了 ${qty} 份${item.name}。`;
-      } else {
-        resultStr = `【轮回记忆】你来到了${location.name}，但什么也没找到。`;
-      }
+      const primaryId = drops[Math.floor(Math.random() * drops.length)];
+      const bonusPool = drops.filter((id) => id !== primaryId);
+      const bonusId = bonusPool[Math.floor(Math.random() * bonusPool.length)];
+      const primary = ITEMS[primaryId];
+      const bonus = ITEMS[bonusId];
+      const primaryQty = 3 + Math.floor(Math.random() * 3);
+      const bonusQty = 1 + Math.floor(Math.random() * 2);
+      const cashBonus = 600 + Math.floor(Math.random() * 900);
+
+      markMemoryLocationUsed(location.id);
+      applyDeltas([
+        { type: 'item', itemId: primary.id, itemName: primary.name, amount: primaryQty },
+        { type: 'item', itemId: bonus.id, itemName: bonus.name, amount: bonusQty },
+        { type: 'cash', amount: cashBonus },
+        { type: 'stat', key: 'san', amount: 2 },
+      ]);
+      resultStr = `【轮回记忆】你按前世线索搜完了 ${location.name}。这是一次性机会：带回 ${primaryQty} 份${primary.name}、${bonusQty} 份${bonus.name}，还找到 ¥${cashBonus} 的可用物资票据。`;
     } else if (location.name === '黑市' && rand < 0.35) {
       const msg = buildPeaceRumor(location.name, 'finance');
       if (!msg) {
@@ -202,8 +230,16 @@ const StrollView: React.FC = () => {
   return (
     <div className="space-y-6 h-full flex flex-col">
       <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+        <SceneBanner
+          image="stroll-street"
+          title="城市漫游"
+          subtitle="霓虹还没熄灭。消息、偶遇和麻烦，都藏在下一个街角。"
+          tone="cyan"
+        />
+        <div className="mt-4">
         <h2 className="text-lg font-bold text-zinc-100 mb-2">逛逛 (耗时 5h)</h2>
         <p className="text-sm text-zinc-500 mb-4">在城市里四处走走，也许会有意外收获。19:00 后不可开始。</p>
+        </div>
         
         <div className="grid grid-cols-2 gap-3 mb-6">
           {locations.map((loc) => (
@@ -217,7 +253,8 @@ const StrollView: React.FC = () => {
                   : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'
               }`}
             >
-              {loc.isMemory ? `★ ${loc.name}` : loc.name}
+              <span className="block font-bold">{loc.isMemory ? `★ ${loc.name}` : loc.name}</span>
+              {loc.isMemory && <span className="mt-1 block text-[10px] text-purple-300/70">前世地点：高收益，仅本轮一次</span>}
             </button>
           ))}
         </div>

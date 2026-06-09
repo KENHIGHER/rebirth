@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { FINANCE_ASSETS, ITEMS, PROPERTIES } from '../types/game';
+import { FINANCE_ASSETS, ITEMS, Property, PROPERTIES } from '../types/game';
+import SceneBanner from './SceneBanner';
 
 type TradeTab = 'items' | 'property' | 'finance';
+type ItemDefinition = typeof ITEMS[keyof typeof ITEMS];
 
 const TradeView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TradeTab>('items');
@@ -33,9 +35,14 @@ const TradeView: React.FC = () => {
     setQuantities(prev => ({ ...prev, [key]: Math.max(1, val) }));
   };
 
-  const handleBuyItem = (key: string, item: any) => {
+  const getEffectiveBuyQuantity = (item: ItemDefinition, qty: number) => {
+    if (item.id !== 'food' && item.id !== 'water') return qty;
+    return Math.min(qty, Math.max(0, storageCapacity - currentStored));
+  };
+
+  const handleBuyItem = (key: string, item: ItemDefinition) => {
     const qty = quantities[key] || 1;
-    const effectiveQty = (item.id === 'food' || item.id === 'water') ? Math.min(qty, Math.max(0, storageCapacity - currentStored)) : qty;
+    const effectiveQty = getEffectiveBuyQuantity(item, qty);
     const price = itemPrices[item.id] ?? item.defaultPrice;
     const totalCost = effectiveQty * price;
     if (effectiveQty <= 0) return;
@@ -45,7 +52,7 @@ const TradeView: React.FC = () => {
     }
   };
 
-  const handleSellItem = (key: string, item: any) => {
+  const handleSellItem = (key: string, item: ItemDefinition) => {
     const qty = quantities[key] || 1;
     const owned = inventory.items[key]?.quantity || 0;
     if (owned >= qty) {
@@ -55,7 +62,7 @@ const TradeView: React.FC = () => {
     }
   };
 
-  const handleBuyProperty = (property: any) => {
+  const handleBuyProperty = (property: Property) => {
     if (cash >= property.price) {
       buyProperty(property, property.price);
       advanceTime(1);
@@ -99,6 +106,14 @@ const TradeView: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full">
+      <div className="mb-4">
+        <SceneBanner
+          image="market"
+          title="地下市场"
+          subtitle="价格会说谎，情报偶尔说真话。把末日前的每一小时花在刀刃上。"
+          tone="amber"
+        />
+      </div>
       <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
         <button 
           onClick={() => setActiveTab('items')}
@@ -157,11 +172,14 @@ const TradeView: React.FC = () => {
         {activeTab === 'items' && (
           <div className="space-y-3">
             {Object.entries(ITEMS).map(([key, item]) => (
-              <div key={key} className="flex flex-col gap-2 bg-zinc-800 p-3 rounded">
+              <div key={key} className="flex flex-col gap-2 bg-zinc-800/90 p-3 rounded border border-zinc-700/60 shadow-[0_12px_35px_rgba(0,0,0,0.2)]">
                 {(() => {
                   const price = itemPrices[item.id] ?? item.defaultPrice;
                   const base = item.defaultPrice;
                   const diff = Math.round(((price - base) / base) * 100);
+                  const qty = quantities[key] || 1;
+                  const effectiveBuyQty = getEffectiveBuyQuantity(item, qty);
+                  const storageBlocked = effectiveBuyQty <= 0 && (item.id === 'food' || item.id === 'water');
                   return (
                     <>
                       <div className="flex justify-between items-center">
@@ -176,6 +194,7 @@ const TradeView: React.FC = () => {
                           <div className="text-yellow-500 font-mono text-sm">¥{price}/份</div>
                           <div className={`text-xs ${diff > 0 ? 'text-red-400' : diff < 0 ? 'text-green-400' : 'text-zinc-500'}`}>较基准 {diff}%</div>
                           <div className="text-[10px] text-zinc-600">日期: {date}</div>
+                          {storageBlocked && <div className="text-[10px] text-red-400">储量已满</div>}
                         </div>
                       </div>
                       <div className="flex items-center justify-end gap-3 mt-2 border-t border-zinc-700 pt-2">
@@ -206,10 +225,10 @@ const TradeView: React.FC = () => {
                           </button>
                           <button 
                             onClick={() => handleBuyItem(key, item)}
-                            disabled={cash < (quantities[key] || 1) * price}
+                            disabled={effectiveBuyQty <= 0 || cash < effectiveBuyQty * price}
                             className="bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 rounded text-sm transition-colors text-green-400"
                           >
-                            买入 (1h)
+                            买入{effectiveBuyQty < qty ? ` ${effectiveBuyQty}` : ''} (1h)
                           </button>
                         </div>
                       </div>
@@ -229,7 +248,7 @@ const TradeView: React.FC = () => {
               </div>
             )}
             {PROPERTIES.map(prop => (
-              <div key={prop.id} className="bg-zinc-800 p-3 rounded">
+              <div key={prop.id} className="bg-zinc-800/90 p-3 rounded border border-zinc-700/60 shadow-[0_12px_35px_rgba(0,0,0,0.2)]">
                 <div className="flex justify-between items-center mb-2">
                   <div className="font-bold text-zinc-200">{prop.name}</div>
                   <span className="text-yellow-500 font-mono text-sm">¥{prop.price.toLocaleString()}</span>
@@ -268,7 +287,7 @@ const TradeView: React.FC = () => {
               const qty = quantities[asset.id] || 1;
               const diff = Math.round(((price - asset.defaultPrice) / asset.defaultPrice) * 100);
               return (
-                <div key={asset.id} className="rounded bg-zinc-800 p-3">
+                <div key={asset.id} className="rounded bg-zinc-800/90 p-3 border border-zinc-700/60 shadow-[0_12px_35px_rgba(0,0,0,0.2)]">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="font-bold text-zinc-200">{asset.name}</div>
