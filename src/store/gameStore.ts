@@ -275,6 +275,8 @@ const computeSuccessChance = (
   return clamp01(0.45 + norm(lead) * 0.45 + norm(i) * 0.05 - diff);
 };
 
+const computeSuperHarvestChance = (luck: number) => clamp(0, 0.2, luck / 500);
+
 const createSuperHarvestBonus = () => {
   const bonusItemIds = ['food', 'water', 'medicine', 'fuel', 'materials'] as const;
   const bonusItemId = bonusItemIds[Math.floor(Math.random() * bonusItemIds.length)];
@@ -696,7 +698,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     let finalOutcome = active.def.kind === 'reward' ? boostRewardOutcome(outcome) : outcome;
     let bonusMessage: Message | null = null;
     const canSuperHarvest = active.def.kind === 'reward' && finalOutcome.deltas.some((d) => d.amount > 0);
-    if (canSuperHarvest && Math.random() < 0.1) {
+    if (canSuperHarvest && Math.random() < computeSuperHarvestChance(st.luck)) {
       const bonus = createSuperHarvestBonus();
       bonusMessage = createDoomsdayMessage();
       finalOutcome = {
@@ -766,7 +768,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       `- 智力类：${samples.map((s) => `${s.name}${Math.round(mkChance('intelligence', s.v, 2) * 100)}%`).join(' / ')}`,
       `- 幸运类：${samples.map((s) => `${s.name}${Math.round(mkChance('luck', s.v, 2) * 100)}%`).join(' / ')}`,
       `- 领导力类：${samples.map((s) => `${s.name}${Math.round(mkChance('leadership', s.v, 2) * 100)}%`).join(' / ')}`,
-      `3) 动画与布局：弹窗固定视口展示，内容分页横向切换（需人工目测确认60fps与无纵向扩展）。`,
+      `3) 超级收获概率：${samples.map((s) => `${s.name}${Math.round(computeSuperHarvestChance(s.v) * 100)}%`).join(' / ')}（上限20%）`,
+      `4) 动画与布局：短内容自然拓长，长内容分页展示。`,
     ];
 
     const report = reportLines.join('\n');
