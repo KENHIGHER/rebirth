@@ -1,22 +1,36 @@
 import React, { useEffect, useState } from 'react';
-import { Activity, Brain, BrainCircuit, Calendar, Clock, RefreshCcw, Wrench } from 'lucide-react';
+import { Activity, Brain, BrainCircuit, Calendar, Clock, LogOut, RefreshCcw, Wrench } from 'lucide-react';
 import AIDMPanel from './components/AIDMPanel';
 import ArchiveView from './components/ArchiveView';
 import BackpackView from './components/BackpackView';
 import DeveloperPanel from './components/DeveloperPanel';
+import DoomsdayScreen from './components/DoomsdayScreen';
 import ExerciseView from './components/ExerciseView';
 import ExploreView from './components/ExploreView';
 import HomeView from './components/HomeView';
 import PagedTextBlock from './components/PagedTextBlock';
 import PropertyView from './components/PropertyView';
 import StrollView from './components/StrollView';
+import StartScreen from './components/StartScreen';
 import TradeView from './components/TradeView';
+import {
+  AI_DM_BASE_URL_STORAGE,
+  AI_DM_KEY_STORAGE,
+  AI_DM_MODEL_STORAGE,
+  AI_DM_PROTOCOL_STORAGE,
+  AI_DM_PROVIDER_STORAGE,
+  generateAIDMWorld,
+  resolveAIDMConnection,
+} from './lib/aiDm';
+import { beginNewGame, hasGameSave } from './lib/gameSave';
 import { useGameStore } from './store/gameStore';
 import { corruptText } from './utils/textEffects';
 
 type View = 'home' | 'backpack' | 'trade' | 'property' | 'exercise' | 'stroll' | 'archive' | 'explore';
 
 function App() {
+  const [inGame, setInGame] = useState(false);
+  const [saveAvailable, setSaveAvailable] = useState(hasGameSave);
   const {
     num,
     date,
@@ -35,10 +49,12 @@ function App() {
     isDoomsday,
     currentMessages,
     doomsdayDays,
+    aiDmTitle,
   } = useGameStore();
   const [currentView, setCurrentView] = useState<View>('home');
   const [devOpen, setDevOpen] = useState(false);
   const [aiDmOpen, setAiDmOpen] = useState(false);
+  const [doomsdayIntroOpen, setDoomsdayIntroOpen] = useState(false);
   const glitch = (text: string) => corruptText(text, san);
 
   useEffect(() => {
@@ -46,6 +62,62 @@ function App() {
       setCurrentView('explore');
     }
   }, [isDoomsday, currentView]);
+
+  useEffect(() => {
+    if (isDoomsday) {
+      setDoomsdayIntroOpen(true);
+    } else {
+      setDoomsdayIntroOpen(false);
+    }
+  }, [isDoomsday]);
+
+  if (!inGame) {
+    return (
+      <StartScreen
+        hasSave={saveAvailable}
+        onNewGame={async (connection) => {
+          let generatedWorld;
+          let resolvedConnection;
+          if (connection) {
+            resolvedConnection = await resolveAIDMConnection(connection);
+            generatedWorld = await generateAIDMWorld(resolvedConnection, {
+              date: '2027.5.1',
+              isDoomsday: false,
+              cash: 10000,
+              stats: {
+                health: 100,
+                san: 50,
+                strength: 50,
+                constitution: 50,
+                intelligence: 50,
+                luck: 50,
+                leadership: 50,
+              },
+            });
+            sessionStorage.setItem(AI_DM_KEY_STORAGE, resolvedConnection.apiKey);
+            sessionStorage.setItem(AI_DM_MODEL_STORAGE, resolvedConnection.model);
+            sessionStorage.setItem(AI_DM_BASE_URL_STORAGE, resolvedConnection.baseUrl);
+            sessionStorage.setItem(AI_DM_PROTOCOL_STORAGE, resolvedConnection.protocol);
+            sessionStorage.setItem(AI_DM_PROVIDER_STORAGE, resolvedConnection.provider);
+          }
+          beginNewGame();
+          if (generatedWorld) {
+            useGameStore.getState().applyAIDMWorld(generatedWorld);
+          } else {
+            sessionStorage.removeItem(AI_DM_KEY_STORAGE);
+            sessionStorage.removeItem(AI_DM_MODEL_STORAGE);
+            sessionStorage.removeItem(AI_DM_BASE_URL_STORAGE);
+            sessionStorage.removeItem(AI_DM_PROTOCOL_STORAGE);
+            sessionStorage.removeItem(AI_DM_PROVIDER_STORAGE);
+          }
+          setCurrentView('home');
+          setSaveAvailable(true);
+          setInGame(true);
+        }}
+        onContinue={() => setInGame(true)}
+      />
+    );
+  }
 
   if (isDead) {
     const doomsdayMessages = currentMessages.filter((m) => m.source === 'doomsday');
@@ -99,6 +171,22 @@ function App() {
     );
   }
 
+  if (doomsdayIntroOpen) {
+    return (
+      <DoomsdayScreen
+        day={date}
+        time={time}
+        aiEnabled={Boolean(aiDmTitle)}
+        worldTitle={aiDmTitle}
+        stats={{ health, san, strength, constitution, intelligence, luck, leadership }}
+        onEnter={() => {
+          setDoomsdayIntroOpen(false);
+          setCurrentView('explore');
+        }}
+      />
+    );
+  }
+
   const renderContent = () => {
     switch (currentView) {
       case 'home':
@@ -123,13 +211,24 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-300 flex flex-col max-w-md mx-auto border-x border-zinc-800">
-      <header className="h-20 bg-zinc-900 border-b border-zinc-800 p-2 text-xs flex flex-col justify-center">
+    <div className="h-screen bg-zinc-950 text-zinc-300 flex flex-col max-w-md mx-auto border-x border-zinc-800 overflow-hidden">
+      <header className="h-[68px] shrink-0 bg-zinc-900 border-b border-zinc-800 p-1.5 text-[11px] flex flex-col justify-center">
         <div className="flex justify-between items-center mb-1">
           <div className="flex items-center gap-1 text-zinc-400">
             <RefreshCcw size={12} /> {glitch('轮回')}: {num} | <Calendar size={12} /> {date} | <Clock size={12} /> {time}:00
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setSaveAvailable(hasGameSave());
+                setInGame(false);
+              }}
+              className="flex items-center gap-1 rounded border border-zinc-700 bg-zinc-950/60 px-2 py-0.5 text-[10px] font-bold text-zinc-300 hover:bg-zinc-800"
+              title="返回标题界面"
+            >
+              <LogOut size={10} />
+              标题
+            </button>
             <button
               onClick={() => setAiDmOpen(true)}
               className="flex items-center gap-1 rounded border border-purple-800 bg-purple-950/60 px-2 py-0.5 text-[10px] font-bold text-purple-200 hover:bg-purple-900/70"
@@ -187,29 +286,29 @@ function App() {
         </div>
       </header>
 
-      <main className={`flex-1 p-4 bg-zinc-950 ${currentView === 'home' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+      <main className="min-h-0 flex-1 overflow-hidden bg-zinc-950 p-3">
         {renderContent()}
       </main>
 
       {isDoomsday ? (
-        <footer className="bg-black border-t border-red-900 p-2 grid grid-cols-5 gap-2 text-sm relative">
+        <footer className="shrink-0 bg-black border-t border-red-900 p-1.5 grid grid-cols-5 gap-1.5 text-xs relative">
           <div className="absolute inset-0 pointer-events-none border-t border-red-900 opacity-50 shadow-[0_-5px_15px_rgba(220,38,38,0.2)]" />
-          <button onClick={() => setCurrentView('explore')} className={`py-3 rounded font-bold ${currentView === 'explore' ? 'bg-red-900 text-white' : 'bg-zinc-900 text-red-500 hover:bg-zinc-800 border border-red-900/50'}`}>{glitch('外出探索')}</button>
-          <button onClick={() => setCurrentView('property')} className={`py-3 rounded font-bold ${currentView === 'property' ? 'bg-red-900 text-white' : 'bg-zinc-900 text-red-500 hover:bg-zinc-800 border border-red-900/50'}`}>{glitch('安全屋')}</button>
-          <button onClick={() => setCurrentView('backpack')} className={`py-3 rounded font-bold ${currentView === 'backpack' ? 'bg-red-900 text-white' : 'bg-zinc-900 text-red-500 hover:bg-zinc-800 border border-red-900/50'}`}>{glitch('背包')}</button>
-          <button onClick={() => setCurrentView('exercise')} className={`py-3 rounded font-bold ${currentView === 'exercise' ? 'bg-red-900 text-white' : 'bg-zinc-900 text-red-500 hover:bg-zinc-800 border border-red-900/50'}`}>{glitch('锻炼')}</button>
-          <button onClick={() => sleep()} className="py-3 rounded bg-red-950 hover:bg-red-900 text-white font-bold border border-red-800">{glitch('下一日')}</button>
+          <button onClick={() => setCurrentView('explore')} className={`py-2 rounded font-bold ${currentView === 'explore' ? 'bg-red-900 text-white' : 'bg-zinc-900 text-red-500 hover:bg-zinc-800 border border-red-900/50'}`}>{glitch('外出探索')}</button>
+          <button onClick={() => setCurrentView('property')} className={`py-2 rounded font-bold ${currentView === 'property' ? 'bg-red-900 text-white' : 'bg-zinc-900 text-red-500 hover:bg-zinc-800 border border-red-900/50'}`}>{glitch('安全屋')}</button>
+          <button onClick={() => setCurrentView('backpack')} className={`py-2 rounded font-bold ${currentView === 'backpack' ? 'bg-red-900 text-white' : 'bg-zinc-900 text-red-500 hover:bg-zinc-800 border border-red-900/50'}`}>{glitch('背包')}</button>
+          <button onClick={() => setCurrentView('exercise')} className={`py-2 rounded font-bold ${currentView === 'exercise' ? 'bg-red-900 text-white' : 'bg-zinc-900 text-red-500 hover:bg-zinc-800 border border-red-900/50'}`}>{glitch('锻炼')}</button>
+          <button onClick={() => sleep()} className="py-2 rounded bg-red-950 hover:bg-red-900 text-white font-bold border border-red-800">{glitch('下一日')}</button>
         </footer>
       ) : (
-        <footer className="bg-zinc-900 border-t border-zinc-800 p-2 grid grid-cols-4 gap-2 text-sm">
-          <button onClick={() => setCurrentView('home')} className={`py-2 rounded ${currentView === 'home' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('主页')}</button>
-          <button onClick={() => setCurrentView('trade')} className={`py-2 rounded ${currentView === 'trade' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('交易')}</button>
-          <button onClick={() => setCurrentView('backpack')} className={`py-2 rounded ${currentView === 'backpack' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('背包')}</button>
-          <button onClick={() => setCurrentView('property')} className={`py-2 rounded ${currentView === 'property' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('地产')}</button>
-          <button onClick={() => setCurrentView('exercise')} className={`py-2 rounded ${currentView === 'exercise' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('锻炼')}</button>
-          <button onClick={() => setCurrentView('stroll')} className={`py-2 rounded ${currentView === 'stroll' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('逛逛')}</button>
-          <button onClick={() => setCurrentView('archive')} className={`py-2 rounded ${currentView === 'archive' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('档案')}</button>
-          <button onClick={() => sleep()} className="py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-red-400 font-bold">{glitch('睡觉')}</button>
+        <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-1.5 grid grid-cols-4 gap-1.5 text-xs">
+          <button onClick={() => setCurrentView('home')} className={`py-1.5 rounded ${currentView === 'home' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('主页')}</button>
+          <button onClick={() => setCurrentView('trade')} className={`py-1.5 rounded ${currentView === 'trade' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('交易')}</button>
+          <button onClick={() => setCurrentView('backpack')} className={`py-1.5 rounded ${currentView === 'backpack' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('背包')}</button>
+          <button onClick={() => setCurrentView('property')} className={`py-1.5 rounded ${currentView === 'property' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('地产')}</button>
+          <button onClick={() => setCurrentView('exercise')} className={`py-1.5 rounded ${currentView === 'exercise' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('锻炼')}</button>
+          <button onClick={() => setCurrentView('stroll')} className={`py-1.5 rounded ${currentView === 'stroll' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('逛逛')}</button>
+          <button onClick={() => setCurrentView('archive')} className={`py-1.5 rounded ${currentView === 'archive' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('档案')}</button>
+          <button onClick={() => sleep()} className="py-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-red-400 font-bold">{glitch('睡觉')}</button>
         </footer>
       )}
       <AIDMPanel open={aiDmOpen} onClose={() => setAiDmOpen(false)} />

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { FINANCE_ASSETS, FINANCE_EVENTS, ITEMS, MARKET_EVENTS, Message } from '../types/game';
+import PagedList from './PagedList';
 import SceneBanner from './SceneBanner';
 
 const LOCATIONS = [
@@ -253,8 +254,8 @@ const StrollView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 h-full flex flex-col">
-      <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+    <div className="space-y-4 h-full min-h-0 flex flex-col">
+      <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 flex min-h-0 flex-1 flex-col overflow-hidden">
         <SceneBanner
           image="stroll-street"
           title="城市漫游"
@@ -266,10 +267,13 @@ const StrollView: React.FC = () => {
         <p className="text-sm text-zinc-500 mb-4">在城市里四处走走，也许会有意外收获。19:00 后不可开始。</p>
         </div>
         
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          {locations.map((loc) => (
+        <PagedList
+          items={locations}
+          pageSize={6}
+          getKey={(loc) => loc.id}
+          gridClassName="grid grid-cols-2 gap-3"
+          renderItem={(loc) => (
             <button
-              key={loc.id}
               onClick={() => handleStroll(loc)}
               disabled={time > 19 || !!pendingOffer}
               className={`disabled:opacity-50 disabled:cursor-not-allowed p-3 rounded text-sm transition-colors ${
@@ -281,11 +285,11 @@ const StrollView: React.FC = () => {
               <span className="block font-bold">{loc.isMemory ? `★ ${loc.name}` : loc.name}</span>
               {loc.isMemory && <span className="mt-1 block text-[10px] text-purple-300/70">前世地点：高收益，仅本轮一次</span>}
             </button>
-          ))}
-        </div>
+          )}
+        />
 
         {pendingOffer && (
-          <div className="mb-6 rounded border border-amber-800/60 bg-amber-950/30 p-4 text-sm">
+          <div className="mt-3 shrink-0 rounded border border-amber-800/60 bg-amber-950/30 p-3 text-sm">
             <div className="font-bold text-amber-200">黑市情报交易</div>
             <div className="mt-2 text-zinc-300">
               商人压低声音说，这是一条{messageTypeLabel(pendingOffer.message.type)}，会在 {pendingOffer.message.triggerDate} 左右兑现。
@@ -313,7 +317,7 @@ const StrollView: React.FC = () => {
         )}
 
         {feedback && (
-          <div className="bg-zinc-800 p-4 rounded text-sm text-zinc-300 text-center border border-zinc-700">
+          <div className="mt-3 shrink-0 bg-zinc-800 p-3 rounded text-sm text-zinc-300 text-center border border-zinc-700">
             {feedback}
           </div>
         )}

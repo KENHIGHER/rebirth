@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import PagedList from './PagedList';
 
 const ExerciseView: React.FC = () => {
   const { advanceTime, addStat, addSan, addHealth, time, strength, constitution, health, san, addLog, hasExercisedToday, setHasExercisedToday, balanceExerciseCooldown, setBalanceExerciseCooldown } = useGameStore();
@@ -53,9 +54,22 @@ const ExerciseView: React.FC = () => {
     }
   };
 
+  const exerciseOptions = [
+    { type: 'con', name: '体能维持', detail: '耗时 1h | 体质+2', disabled: hasExercisedToday },
+    { type: 'str', name: '格斗训练', detail: '耗时 2h | 力量+1.5', disabled: hasExercisedToday },
+    { type: 'san', name: '阅读学习', detail: '耗时 1h | 理智+2 智力+1', disabled: hasExercisedToday },
+    { type: 'rest', name: '休息', detail: '耗时 2h | 血量+50%', disabled: hasExercisedToday },
+    {
+      type: 'balance',
+      name: '平衡锻炼',
+      detail: balanceExerciseCooldown > 0 ? `冷却中 (${balanceExerciseCooldown}天)` : '耗时 2h | 体质+1 力量+1',
+      disabled: hasExercisedToday || balanceExerciseCooldown > 0,
+    },
+  ];
+
   return (
-    <div className="space-y-6 h-full flex flex-col">
-      <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 flex gap-2 text-center">
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <div className="shrink-0 rounded-lg border border-zinc-800 bg-zinc-900 p-4 flex gap-2 text-center">
         <div className="flex-1">
           <div className="text-zinc-500 text-xs">血量</div>
           <div className="text-lg text-red-400 font-mono font-bold">{Math.floor(health)}</div>
@@ -74,60 +88,27 @@ const ExerciseView: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 bg-zinc-900 p-4 rounded-lg border border-zinc-800 overflow-y-auto custom-scrollbar">
-        <h2 className="text-lg font-bold text-zinc-100 mb-4">锻炼选项</h2>
+      <div className="flex min-h-0 flex-1 flex-col rounded-lg border border-zinc-800 bg-zinc-900 p-4 overflow-hidden">
+        <h2 className="mb-4 shrink-0 text-lg font-bold text-zinc-100">锻炼选项</h2>
         
-        <div className="space-y-3 mb-6">
-          <button 
-            onClick={() => handleExercise('con')}
-            disabled={hasExercisedToday}
-            className="w-full flex justify-between items-center bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 p-4 rounded transition-colors"
-          >
-            <span className="font-bold text-zinc-200">体能维持</span>
-            <span className="text-zinc-400 text-sm">耗时 1h | 体质+2</span>
-          </button>
-          
-          <button 
-            onClick={() => handleExercise('str')}
-            disabled={hasExercisedToday}
-            className="w-full flex justify-between items-center bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 p-4 rounded transition-colors"
-          >
-            <span className="font-bold text-zinc-200">格斗训练</span>
-            <span className="text-zinc-400 text-sm">耗时 2h | 力量+1.5</span>
-          </button>
-          
-          <button 
-            onClick={() => handleExercise('san')}
-            disabled={hasExercisedToday}
-            className="w-full flex justify-between items-center bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 p-4 rounded transition-colors"
-          >
-            <span className="font-bold text-zinc-200">阅读学习</span>
-            <span className="text-zinc-400 text-sm">耗时 1h | 理智+2 智力+1</span>
-          </button>
-
-          <button 
-            onClick={() => handleExercise('rest')}
-            disabled={hasExercisedToday}
-            className="w-full flex justify-between items-center bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 p-4 rounded transition-colors"
-          >
-            <span className="font-bold text-zinc-200">休息</span>
-            <span className="text-zinc-400 text-sm">耗时 2h | 血量+50%</span>
-          </button>
-
-          <button 
-            onClick={() => handleExercise('balance')}
-            disabled={hasExercisedToday || balanceExerciseCooldown > 0}
-            className="w-full flex justify-between items-center bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 p-4 rounded transition-colors"
-          >
-            <span className="font-bold text-zinc-200">平衡锻炼</span>
-            <span className="text-zinc-400 text-sm">
-              {balanceExerciseCooldown > 0 ? `冷却中 (${balanceExerciseCooldown}天)` : '耗时 2h | 体质+1 力量+1'}
-            </span>
-          </button>
-        </div>
+        <PagedList
+          items={exerciseOptions}
+          pageSize={3}
+          getKey={(option) => option.type}
+          renderItem={(option) => (
+            <button
+              onClick={() => handleExercise(option.type)}
+              disabled={option.disabled}
+              className="w-full flex justify-between items-center bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 p-4 rounded transition-colors"
+            >
+              <span className="font-bold text-zinc-200">{option.name}</span>
+              <span className="text-zinc-400 text-sm">{option.detail}</span>
+            </button>
+          )}
+        />
 
         {feedback && (
-          <div className="bg-zinc-800 p-3 rounded text-sm text-green-400 text-center animate-pulse">
+          <div className="mt-3 shrink-0 bg-zinc-800 p-3 rounded text-sm text-green-400 text-center animate-pulse">
             {feedback}
           </div>
         )}

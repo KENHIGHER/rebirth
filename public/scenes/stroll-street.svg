@@ -1,22 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-label="quiet city street">
-  <defs>
-    <linearGradient id="streetBg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#082f49"/>
-      <stop offset="0.5" stop-color="#18181b"/>
-      <stop offset="1" stop-color="#0b0b0d"/>
-    </linearGradient>
-    <radialGradient id="neon" cx="72%" cy="30%" r="45%">
-      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.28"/>
-      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <rect width="960" height="360" fill="url(#streetBg)"/>
-  <rect width="960" height="360" fill="url(#neon)"/>
-  <path d="M0 286h960v74H0z" fill="#09090b"/>
-  <path d="M84 114h150v172H84zm242 64h96v108h-96zm318-96h166v204H644z" fill="#27272a"/>
-  <path d="M116 146h88v28h-88zm0 58h88v28h-88zm548-26h124v32H664zm0 62h124v32H664z" fill="#164e63" opacity="0.8"/>
-  <path d="M0 318c180-14 314-42 462-36 166 7 287 46 498 18v60H0z" fill="#111827"/>
-  <path d="M282 292h84m178 0h72" stroke="#facc15" stroke-opacity="0.55" stroke-width="7" stroke-linecap="round"/>
-  <path d="M504 98v192" stroke="#52525b" stroke-width="10"/>
-  <circle cx="504" cy="92" r="28" fill="#facc15" opacity="0.74"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-label="pixel quiet city street" shape-rendering="crispEdges">
+  <rect width="960" height="360" fill="#071014"/>
+  <rect y="0" width="960" height="118" fill="#0f172a"/>
+  <g fill="#111827">
+    <rect x="0" y="92" width="118" height="178"/><rect x="154" y="54" width="134" height="216"/>
+    <rect x="336" y="120" width="104" height="150"/><rect x="498" y="72" width="146" height="198"/>
+    <rect x="704" y="104" width="92" height="166"/><rect x="846" y="58" width="114" height="212"/>
+  </g>
+  <g fill="#67e8f9" opacity=".8">
+    <rect x="178" y="84" width="78" height="12"/><rect x="526" y="102" width="80" height="12"/><rect x="866" y="92" width="62" height="12"/>
+  </g>
+  <g fill="#e0f2fe" opacity=".62">
+    <rect x="28" y="126" width="10" height="10"/><rect x="56" y="126" width="10" height="10"/><rect x="184" y="128" width="12" height="12"/>
+    <rect x="224" y="128" width="12" height="12"/><rect x="360" y="156" width="10" height="10"/><rect x="392" y="156" width="10" height="10"/>
+    <rect x="526" y="136" width="12" height="12"/><rect x="570" y="136" width="12" height="12"/><rect x="874" y="134" width="12" height="12"/>
+  </g>
+  <rect x="0" y="270" width="960" height="90" fill="#050505"/>
+  <polygon points="282,270 680,270 780,360 182,360" fill="#0f172a"/>
+  <g fill="#e5e7eb" opacity=".7">
+    <rect x="468" y="290" width="26" height="8"/><rect x="454" y="320" width="34" height="8"/>
+  </g>
+  <g fill="#020617">
+    <rect x="100" y="248" width="30" height="22"/><rect x="128" y="238" width="48" height="32"/>
+    <rect x="740" y="246" width="34" height="24"/><rect x="772" y="234" width="54" height="36"/>
+  </g>
 </svg>

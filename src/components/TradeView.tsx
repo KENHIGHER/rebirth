@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { FINANCE_ASSETS, ITEMS, Property, PROPERTIES } from '../types/game';
+import PagedList from './PagedList';
 import SceneBanner from './SceneBanner';
 
 type TradeTab = 'items' | 'property' | 'finance';
@@ -104,9 +105,14 @@ const TradeView: React.FC = () => {
   const visibleCurrentRumors = currentRumors.filter(rumorFilter(activeTab));
   const visibleArchivedRumors = allArchived.filter(rumorFilter(activeTab));
 
+  const propertyItems = [
+    ...PROPERTIES.map((property) => ({ type: 'buy' as const, property })),
+    ...(inventory.properties[0] ? [{ type: 'sell' as const, property: inventory.properties[0] }] : []),
+  ];
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="mb-4">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="mb-2 shrink-0">
         <SceneBanner
           image="market"
           title="地下市场"
@@ -114,7 +120,7 @@ const TradeView: React.FC = () => {
           tone="amber"
         />
       </div>
-      <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+      <div className="mb-2 flex shrink-0 gap-2 overflow-hidden pb-1">
         <button 
           onClick={() => setActiveTab('items')}
           className={`px-3 py-1 whitespace-nowrap rounded-full text-sm ${activeTab === 'items' ? 'bg-zinc-200 text-zinc-900' : 'bg-zinc-800 text-zinc-300'}`}
@@ -135,7 +141,7 @@ const TradeView: React.FC = () => {
         </button>
       </div>
 
-      <div className="flex justify-between items-center bg-zinc-900 p-3 rounded mb-4 border border-zinc-800">
+      <div className="mb-2 flex shrink-0 justify-between items-center bg-zinc-900 p-2 rounded border border-zinc-800">
         <span className="text-zinc-400 text-sm">可用资金</span>
         <div className="text-right">
           <div className="text-yellow-500 font-mono font-bold">¥{cash.toLocaleString()}</div>
@@ -143,25 +149,25 @@ const TradeView: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {(visibleCurrentRumors.length > 0 || visibleArchivedRumors.length > 0) && (
-          <div className="space-y-3 mb-4">
+          <div className="mb-2 shrink-0 space-y-2">
             {visibleCurrentRumors.length > 0 && (
-              <div className="bg-emerald-900/20 border border-emerald-800/40 p-3 rounded text-xs text-emerald-200">
+              <div className="bg-emerald-900/20 border border-emerald-800/40 p-2 rounded text-xs text-emerald-200">
                 <div className="font-bold mb-1">本轮回小道消息（仅本世有效）：</div>
                 <ul className="list-disc pl-4 space-y-1">
-                  {visibleCurrentRumors.map(msg => (
-                    <li key={msg.id}>{msg.text}</li>
+                  {visibleCurrentRumors.slice(0, 1).map(msg => (
+                    <li key={msg.id} className="re-clamp-3">{msg.text}</li>
                   ))}
                 </ul>
               </div>
             )}
             {visibleArchivedRumors.length > 0 && (
-              <div className="bg-blue-900/30 border border-blue-800 p-3 rounded text-xs text-blue-300">
+              <div className="bg-blue-900/30 border border-blue-800 p-2 rounded text-xs text-blue-300">
                 <div className="font-bold mb-1">前世档案（仅本世可用）：</div>
                 <ul className="list-disc pl-4 space-y-1">
-                  {visibleArchivedRumors.map(msg => (
-                    <li key={msg.id}>{msg.text}</li>
+                  {visibleArchivedRumors.slice(0, 1).map(msg => (
+                    <li key={msg.id} className="re-clamp-3">{msg.text}</li>
                   ))}
                 </ul>
               </div>
@@ -170,9 +176,12 @@ const TradeView: React.FC = () => {
         )}
 
         {activeTab === 'items' && (
-          <div className="space-y-3">
-            {Object.entries(ITEMS).map(([key, item]) => (
-              <div key={key} className="flex flex-col gap-2 bg-zinc-800/90 p-3 rounded border border-zinc-700/60 shadow-[0_12px_35px_rgba(0,0,0,0.2)]">
+          <PagedList
+            items={Object.entries(ITEMS)}
+            pageSize={2}
+            getKey={([key]) => key}
+            renderItem={([key, item]) => (
+              <div key={key} className="flex flex-col gap-2 bg-zinc-800/90 p-2.5 rounded border border-zinc-700/60 shadow-[0_12px_35px_rgba(0,0,0,0.2)]">
                 {(() => {
                   const price = itemPrices[item.id] ?? item.defaultPrice;
                   const base = item.defaultPrice;
@@ -236,58 +245,65 @@ const TradeView: React.FC = () => {
                   );
                 })()}
               </div>
-            ))}
-          </div>
+            )}
+          />
         )}
 
         {activeTab === 'property' && (
-          <div className="space-y-3">
+          <div className="flex h-full min-h-0 flex-col">
             {inventory.properties.length > 0 && (
-              <div className="rounded border border-amber-900/40 bg-amber-950/20 p-3 text-xs text-amber-200">
+              <div className="mb-3 shrink-0 rounded border border-amber-900/40 bg-amber-950/20 p-3 text-xs text-amber-200">
                 当前只能持有一处地产。若要更换，请先卖出现有安全屋。
               </div>
             )}
-            {PROPERTIES.map(prop => (
-              <div key={prop.id} className="bg-zinc-800/90 p-3 rounded border border-zinc-700/60 shadow-[0_12px_35px_rgba(0,0,0,0.2)]">
+            <PagedList
+              items={propertyItems}
+              pageSize={2}
+              getKey={(entry) => `${entry.type}-${entry.property.id}`}
+              renderItem={(entry) => entry.type === 'buy' ? (
+              <div className="bg-zinc-800/90 p-2.5 rounded border border-zinc-700/60 shadow-[0_12px_35px_rgba(0,0,0,0.2)]">
                 <div className="flex justify-between items-center mb-2">
-                  <div className="font-bold text-zinc-200">{prop.name}</div>
-                  <span className="text-yellow-500 font-mono text-sm">¥{prop.price.toLocaleString()}</span>
+                  <div className="font-bold text-zinc-200">{entry.property.name}</div>
+                  <span className="text-yellow-500 font-mono text-sm">¥{entry.property.price.toLocaleString()}</span>
                 </div>
                 <div className="text-xs text-zinc-400 grid grid-cols-2 gap-1 mb-3">
-                  <div>结构: {prop.structure}</div>
-                  <div>防护: {prop.defense}</div>
-                  <div>空间: {prop.space}</div>
-                  <div>舒适: {prop.comfort}</div>
+                  <div>结构: {entry.property.structure}</div>
+                  <div>防护: {entry.property.defense}</div>
+                  <div>空间: {entry.property.space}</div>
+                  <div>舒适: {entry.property.comfort}</div>
                 </div>
                 <button 
-                  onClick={() => handleBuyProperty(prop)}
-                  disabled={cash < prop.price || inventory.properties.length > 0}
+                  onClick={() => handleBuyProperty(entry.property)}
+                  disabled={cash < entry.property.price || inventory.properties.length > 0}
                   className="w-full bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed py-2 rounded text-sm transition-colors"
                 >
                   购买地产 (1h)
                 </button>
               </div>
-            ))}
-            {inventory.properties[0] && (
+              ) : (
               <button
-                onClick={() => handleSellProperty(inventory.properties[0].id)}
+                onClick={() => handleSellProperty(entry.property.id)}
                 className="w-full rounded bg-red-950/70 py-2 text-sm font-bold text-red-200 hover:bg-red-900/70"
               >
-                售出现有地产 {inventory.properties[0].name} (1h)
+                售出现有地产 {entry.property.name} (1h)
               </button>
-            )}
+              )}
+            />
           </div>
         )}
 
         {activeTab === 'finance' && (
-          <div className="space-y-3">
-            {FINANCE_ASSETS.map((asset) => {
+          <PagedList
+            items={FINANCE_ASSETS}
+            pageSize={2}
+            getKey={(asset) => asset.id}
+            renderItem={(asset) => {
               const price = financePrices[asset.id] ?? asset.defaultPrice;
               const owned = financeHoldings[asset.id]?.quantity || 0;
               const qty = quantities[asset.id] || 1;
               const diff = Math.round(((price - asset.defaultPrice) / asset.defaultPrice) * 100);
               return (
-                <div key={asset.id} className="rounded bg-zinc-800/90 p-3 border border-zinc-700/60 shadow-[0_12px_35px_rgba(0,0,0,0.2)]">
+                <div key={asset.id} className="rounded bg-zinc-800/90 p-2.5 border border-zinc-700/60 shadow-[0_12px_35px_rgba(0,0,0,0.2)]">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="font-bold text-zinc-200">{asset.name}</div>
@@ -330,8 +346,8 @@ const TradeView: React.FC = () => {
                   </div>
                 </div>
               );
-            })}
-          </div>
+            }}
+          />
         )}
       </div>
     </div>

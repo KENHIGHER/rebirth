@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import PagedList from './PagedList';
 import RandomEventModal from './RandomEventModal';
 import SceneBanner from './SceneBanner';
 
@@ -62,8 +63,8 @@ const ExploreView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 h-full flex flex-col">
-      <div className="bg-black p-4 rounded-lg border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] flex-1 overflow-y-auto custom-scrollbar">
+    <div className="space-y-4 h-full min-h-0 flex flex-col">
+      <div className="bg-black p-4 rounded-lg border border-red-900/50 shadow-[0_0_15px_rgba(220,38,38,0.1)] flex-1 min-h-0 flex flex-col overflow-hidden">
         <SceneBanner
           image="explore-ruins"
           title="废墟搜索"
@@ -75,10 +76,13 @@ const ExploreView: React.FC = () => {
         <p className="text-sm text-red-400/70 mb-4">高风险高回报。必须在16:00前出发。</p>
         </div>
 
-        <div className="space-y-3 mb-6">
-          {locations.map((loc) => (
+        <PagedList
+          items={locations}
+          pageSize={3}
+          getKey={(loc) => loc.id}
+          gridClassName="space-y-3"
+          renderItem={(loc) => (
             <button
-              key={loc.id}
               onClick={() => handleExplore(loc)}
               disabled={time > 16 || !!activeEvent}
               className="w-full text-left bg-zinc-900/90 hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed p-3 rounded border border-red-900/30 hover:border-red-700/70 transition-all shadow-[0_10px_30px_rgba(0,0,0,0.18)]"
@@ -96,11 +100,11 @@ const ExploreView: React.FC = () => {
                 </div>
               )}
             </button>
-          ))}
-        </div>
+          )}
+        />
 
         {feedback && (
-          <div className="bg-red-950/50 p-4 rounded text-sm text-red-200 text-center border border-red-900">
+          <div className="mt-3 shrink-0 bg-red-950/50 p-3 rounded text-sm text-red-200 text-center border border-red-900">
             {feedback}
           </div>
         )}

@@ -23,11 +23,11 @@ const SceneBanner: React.FC<SceneBannerProps> = ({ image, title, subtitle, tone 
         src={imageUrl}
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover opacity-80"
+        className="absolute inset-0 h-full w-full object-cover opacity-90 [image-rendering:pixelated]"
       />
       <div className={`absolute inset-0 bg-gradient-to-r ${toneClass[tone]}`} />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_15%,rgba(255,255,255,0.16),transparent_24%)]" />
-      <div className="relative z-10 flex min-h-[118px] flex-col justify-end p-4">
+      <div className="relative z-10 flex min-h-[72px] flex-col justify-end p-2.5">
         <div className="text-[10px] uppercase tracking-[0.35em] text-zinc-400">Rebirth Scene</div>
         <div className="mt-1 text-xl font-bold tracking-widest text-zinc-100 drop-shadow">{title}</div>
         <div className="mt-1 max-w-[260px] text-xs leading-relaxed text-zinc-300/85">{subtitle}</div>

@@ -9,6 +9,7 @@ import {
   Property,
 } from '../types/game';
 import { DOOMSDAY_EVENTS } from '../events/doomsdayEvents';
+import { generateAIDMNarrative, getStoredAIDMCredentials } from '../lib/aiDm';
 import { ActiveRandomEvent, CoreAttribute, Delta, EventKind, EventOutcome, RandomEventDefinition } from '../types/randomEvent';
 
 const INITIAL_DATE = '2027.5.1';
@@ -1045,14 +1046,54 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   addLog: (text: string) => {
-    set((state) => ({
+    const id = Math.random().toString(36).substr(2, 9);
+    const state = get();
+    const shouldNarrate = Boolean(state.aiDmTitle);
+    set({
       logs: [{
-        id: Math.random().toString(36).substr(2, 9),
+        id,
         date: state.date,
         time: state.time,
-        text
+        text: shouldNarrate ? '命运正在把这一刻写成记忆……' : text,
       }, ...state.logs],
-    }));
+    });
+
+    if (!shouldNarrate) return;
+    const credentials = getStoredAIDMCredentials();
+    if (!credentials) {
+      set((nextState) => ({
+        logs: nextState.logs.map((log) => log.id === id ? { ...log, text } : log),
+      }));
+      return;
+    }
+
+    generateAIDMNarrative(credentials, {
+      rawEvent: text,
+      date: state.date,
+      time: state.time,
+      isDoomsday: state.isDoomsday,
+      worldTitle: state.aiDmTitle,
+      stats: {
+        health: state.health,
+        san: state.san,
+        strength: state.strength,
+        constitution: state.constitution,
+        intelligence: state.intelligence,
+        luck: state.luck,
+        leadership: state.leadership,
+      },
+    })
+      .then((narrative) => {
+        if (!narrative) return;
+        set((nextState) => ({
+          logs: nextState.logs.map((log) => log.id === id ? { ...log, text: narrative } : log),
+        }));
+      })
+      .catch(() => {
+        set((nextState) => ({
+          logs: nextState.logs.map((log) => log.id === id ? { ...log, text } : log),
+        }));
+      });
   },
 
   markMemoryLocationUsed: (locationId: string) => {

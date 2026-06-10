@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGameStore } from '../store/gameStore';
+import PagedList from './PagedList';
 
 const PropertyView: React.FC = () => {
   const { inventory, upgradeProperty, isDoomsday } = useGameStore();
@@ -16,9 +17,9 @@ const PropertyView: React.FC = () => {
     : [];
 
   return (
-    <div className="space-y-6">
-      <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
-        <div className="mb-4 flex items-center justify-between">
+    <div className="h-full min-h-0">
+      <div className="flex h-full min-h-0 flex-col rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+        <div className="mb-4 flex shrink-0 items-center justify-between">
           <h2 className="text-lg font-bold text-zinc-100">安全屋管理</h2>
           <div className="text-right text-xs text-zinc-500">
             <div>建材: {materials}</div>
@@ -28,10 +29,10 @@ const PropertyView: React.FC = () => {
         {!property ? (
           <p className="text-zinc-500 text-sm text-center py-4">暂无地产，请前往交易界面购置安全屋</p>
         ) : (
-          <div className="space-y-4">
-            <div className="bg-zinc-800 p-4 rounded border border-zinc-700">
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="mb-3 shrink-0 rounded border border-zinc-700 bg-zinc-800 p-4">
               <div className="font-bold text-zinc-200 mb-3">{property.name}</div>
-              <div className="grid grid-cols-2 gap-2 text-sm text-zinc-300 mb-4">
+              <div className="grid grid-cols-2 gap-2 text-sm text-zinc-300">
                 <div className="bg-zinc-900 p-2 rounded flex justify-between">
                   <span className="text-zinc-500">结构</span>
                   <span>{property.structure}</span>
@@ -49,9 +50,13 @@ const PropertyView: React.FC = () => {
                   <span>{property.comfort}</span>
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-2 border-t border-zinc-700 pt-3">
-                {upgrades.map((upgrade) => (
+            <PagedList
+              items={upgrades}
+              pageSize={2}
+              getKey={(upgrade) => upgrade.key}
+              renderItem={(upgrade) => (
                   <div key={upgrade.key} className="rounded bg-zinc-900 p-3">
                     <div className="flex items-center justify-between text-sm">
                       <div className="font-bold text-zinc-200">
@@ -73,9 +78,8 @@ const PropertyView: React.FC = () => {
                       升级{upgrade.label}
                     </button>
                   </div>
-                ))}
-              </div>
-            </div>
+              )}
+            />
           </div>
         )}
       </div>

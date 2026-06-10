@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGameStore } from '../store/gameStore';
 import { ITEMS } from '../types/game';
+import PagedList from './PagedList';
 
 const BackpackView: React.FC = () => {
   const { cash, inventory, financeHoldings, financePrices } = useGameStore();
@@ -11,76 +12,93 @@ const BackpackView: React.FC = () => {
   const currentStored = (inventory.items.food?.quantity || 0) + (inventory.items.water?.quantity || 0);
   const holdingList = Object.values(financeHoldings);
 
-  return (
-    <div className="space-y-6">
-      <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
-        <h2 className="text-lg font-bold text-zinc-100 mb-2">资金面板</h2>
-        <p className="text-2xl text-yellow-500 font-mono">¥{cash.toLocaleString()}</p>
-      </div>
-
-      <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
-        <h2 className="text-lg font-bold text-zinc-100 mb-4">物资面板</h2>
-        <div className="mb-3 rounded bg-zinc-800 p-3 text-xs text-zinc-400">
-          食物+水储量: {currentStored}/{storageCapacity}
+  const sections = [
+    {
+      id: 'cash',
+      node: (
+        <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+          <h2 className="text-lg font-bold text-zinc-100 mb-2">资金面板</h2>
+          <p className="text-2xl text-yellow-500 font-mono">¥{cash.toLocaleString()}</p>
         </div>
-        {itemsList.length === 0 ? (
-          <p className="text-zinc-500 text-sm text-center py-4">背包空空如也</p>
-        ) : (
-          <div className="space-y-3">
-            {itemsList.map(item => {
-              const baseItem = ITEMS[item.id as keyof typeof ITEMS];
-              return (
-                <div key={item.id} className="flex justify-between items-center bg-zinc-800 p-3 rounded">
-                  <div>
-                    <div className="font-bold text-zinc-200">{item.name}</div>
-                    <div className="text-xs text-zinc-500">均价: ¥{item.buyPrice.toFixed(1)}</div>
-                    {baseItem && <div className="text-xs text-zinc-400 mt-1">{baseItem.use}</div>}
-                  </div>
-                  <div className="text-xl font-mono text-zinc-300">
-                    x{item.quantity}
-                  </div>
-                </div>
-              );
-            })}
+      ),
+    },
+    {
+      id: 'items',
+      node: (
+        <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+          <h2 className="text-lg font-bold text-zinc-100 mb-4">物资面板</h2>
+          <div className="mb-3 rounded bg-zinc-800 p-3 text-xs text-zinc-400">
+            食物+水储量: {currentStored}/{storageCapacity}
           </div>
-        )}
-      </div>
-
-      <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
-        <h2 className="text-lg font-bold text-zinc-100 mb-4">金融持仓</h2>
-        {holdingList.length === 0 ? (
-          <p className="text-zinc-500 text-sm text-center py-4">暂无股票或贵金属持仓</p>
-        ) : (
-          <div className="space-y-3">
-            {holdingList.map((holding) => {
-              const currentPrice = financePrices[holding.id] || holding.buyPrice;
-              const profit = Math.round(((currentPrice - holding.buyPrice) / holding.buyPrice) * 100);
-              return (
-                <div key={holding.id} className="bg-zinc-800 p-3 rounded">
-                  <div className="flex items-center justify-between">
+          {itemsList.length === 0 ? (
+            <p className="text-zinc-500 text-sm text-center py-4">背包空空如也</p>
+          ) : (
+            <PagedList
+              items={itemsList}
+              pageSize={3}
+              getKey={(item) => item.id}
+              renderItem={(item) => {
+                const baseItem = ITEMS[item.id as keyof typeof ITEMS];
+                return (
+                  <div className="flex justify-between items-center bg-zinc-800 p-3 rounded">
                     <div>
-                      <div className="font-bold text-zinc-200">{holding.name}</div>
-                      <div className="text-xs text-zinc-500">{holding.type === 'stock' ? '股票' : '贵金属'} | 持有 {holding.quantity}</div>
+                      <div className="font-bold text-zinc-200">{item.name}</div>
+                      <div className="text-xs text-zinc-500">均价: ¥{item.buyPrice.toFixed(1)}</div>
+                      {baseItem && <div className="text-xs text-zinc-400 mt-1">{baseItem.use}</div>}
                     </div>
-                    <div className="text-right text-xs">
-                      <div className="text-zinc-300">买入 ¥{holding.buyPrice.toFixed(1)}</div>
-                      <div className="text-yellow-500">现价 ¥{currentPrice}</div>
-                      <div className={profit >= 0 ? 'text-green-400' : 'text-red-400'}>{profit >= 0 ? '+' : ''}{profit}%</div>
+                    <div className="text-xl font-mono text-zinc-300">x{item.quantity}</div>
+                  </div>
+                );
+              }}
+            />
+          )}
+        </div>
+      ),
+    },
+    {
+      id: 'finance',
+      node: (
+        <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+          <h2 className="text-lg font-bold text-zinc-100 mb-4">金融持仓</h2>
+          {holdingList.length === 0 ? (
+            <p className="text-zinc-500 text-sm text-center py-4">暂无股票或贵金属持仓</p>
+          ) : (
+            <PagedList
+              items={holdingList}
+              pageSize={3}
+              getKey={(holding) => holding.id}
+              renderItem={(holding) => {
+                const currentPrice = financePrices[holding.id] || holding.buyPrice;
+                const profit = Math.round(((currentPrice - holding.buyPrice) / holding.buyPrice) * 100);
+                return (
+                  <div className="bg-zinc-800 p-3 rounded">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-zinc-200">{holding.name}</div>
+                        <div className="text-xs text-zinc-500">{holding.type === 'stock' ? '股票' : '贵金属'} | 持有 {holding.quantity}</div>
+                      </div>
+                      <div className="text-right text-xs">
+                        <div className="text-zinc-300">买入 ¥{holding.buyPrice.toFixed(1)}</div>
+                        <div className="text-yellow-500">现价 ¥{currentPrice}</div>
+                        <div className={profit >= 0 ? 'text-green-400' : 'text-red-400'}>{profit >= 0 ? '+' : ''}{profit}%</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
-        <h2 className="text-lg font-bold text-zinc-100 mb-4">已购地产</h2>
-        {!property ? (
-          <p className="text-zinc-500 text-sm text-center py-4">暂无地产</p>
-        ) : (
-          <div className="space-y-3">
+                );
+              }}
+            />
+          )}
+        </div>
+      ),
+    },
+    {
+      id: 'property',
+      node: (
+        <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800">
+          <h2 className="text-lg font-bold text-zinc-100 mb-4">已购地产</h2>
+          {!property ? (
+            <p className="text-zinc-500 text-sm text-center py-4">暂无地产</p>
+          ) : (
             <div className="bg-zinc-800 p-3 rounded">
               <div className="font-bold text-zinc-200">{property.name}</div>
               <div className="text-xs text-zinc-400 grid grid-cols-2 gap-1 mt-2">
@@ -94,9 +112,20 @@ const BackpackView: React.FC = () => {
                 <div>舒适等级: {property.comfortLevel}</div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="h-full min-h-0">
+      <PagedList
+        items={sections}
+        pageSize={1}
+        getKey={(section) => section.id}
+        renderItem={(section) => section.node}
+      />
     </div>
   );
 };

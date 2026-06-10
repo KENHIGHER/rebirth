@@ -4,19 +4,18 @@ import { ScrollText, Clock, Calendar, ChevronLeft, ChevronRight } from 'lucide-r
 import { corruptText } from '../utils/textEffects';
 import SceneBanner from './SceneBanner';
 
-const PAGE_SIZE = 10;
-
 const HomeView: React.FC = () => {
-  const { logs, san } = useGameStore();
+  const { logs, san, aiDmTitle } = useGameStore();
   const [currentPage, setCurrentPage] = useState(1);
   const glitch = (text: string) => corruptText(text, san);
 
-  const totalPages = Math.ceil(logs.length / PAGE_SIZE) || 1;
+  const pageSize = aiDmTitle ? 3 : 5;
+  const totalPages = Math.ceil(logs.length / pageSize) || 1;
   
   const handlePrev = () => setCurrentPage(p => Math.max(1, p - 1));
   const handleNext = () => setCurrentPage(p => Math.min(totalPages, p + 1));
 
-  const currentLogs = logs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const currentLogs = logs.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="space-y-4 h-full flex flex-col">
@@ -29,7 +28,8 @@ const HomeView: React.FC = () => {
       <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 flex-1 flex flex-col overflow-hidden">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
-            <ScrollText size={20} className="text-yellow-400" /> {glitch('事件记录')}
+            <ScrollText size={20} className={aiDmTitle ? 'text-purple-300' : 'text-yellow-400'} />
+            {aiDmTitle ? '主角手记' : glitch('事件记录')}
           </h2>
           <div className="flex items-center gap-2 text-sm">
             <button 
@@ -60,7 +60,9 @@ const HomeView: React.FC = () => {
                   <span className="flex items-center gap-1"><Calendar size={12} /> {log.date}</span>
                   <span className="flex items-center gap-1"><Clock size={12} /> {log.time}:00</span>
                 </div>
-                <div className="text-zinc-200 re-clamp-3">{glitch(log.text)}</div>
+                <div className={`text-zinc-200 ${aiDmTitle ? 'whitespace-pre-wrap leading-relaxed' : 're-clamp-3'}`}>
+                  {glitch(log.text)}
+                </div>
               </div>
             ))
           )}
