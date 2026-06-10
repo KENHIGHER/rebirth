@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Activity, Brain, Calendar, Clock, RefreshCcw, Wrench } from 'lucide-react';
+import { Activity, Brain, BrainCircuit, Calendar, Clock, RefreshCcw, Wrench } from 'lucide-react';
+import AIDMPanel from './components/AIDMPanel';
 import ArchiveView from './components/ArchiveView';
 import BackpackView from './components/BackpackView';
 import DeveloperPanel from './components/DeveloperPanel';
@@ -37,6 +38,7 @@ function App() {
   } = useGameStore();
   const [currentView, setCurrentView] = useState<View>('home');
   const [devOpen, setDevOpen] = useState(false);
+  const [aiDmOpen, setAiDmOpen] = useState(false);
   const glitch = (text: string) => corruptText(text, san);
 
   useEffect(() => {
@@ -129,6 +131,13 @@ function App() {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setAiDmOpen(true)}
+              className="flex items-center gap-1 rounded border border-purple-800 bg-purple-950/60 px-2 py-0.5 text-[10px] font-bold text-purple-200 hover:bg-purple-900/70"
+            >
+              <BrainCircuit size={10} />
+              命运
+            </button>
+            <button
               onClick={() => setDevOpen(true)}
               className="flex items-center gap-1 rounded border border-amber-800 bg-amber-950/60 px-2 py-0.5 text-[10px] font-bold text-amber-200 hover:bg-amber-900/70"
             >
@@ -203,6 +212,7 @@ function App() {
           <button onClick={() => sleep()} className="py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-red-400 font-bold">{glitch('睡觉')}</button>
         </footer>
       )}
+      <AIDMPanel open={aiDmOpen} onClose={() => setAiDmOpen(false)} />
       <DeveloperPanel open={devOpen} onClose={() => setDevOpen(false)} />
     </div>
   );

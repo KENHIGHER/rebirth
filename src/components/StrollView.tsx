@@ -24,6 +24,8 @@ const StrollView: React.FC = () => {
     archivedMessages,
     usedMemoryLocationIds,
     markMemoryLocationUsed,
+    aiRumors,
+    consumeAIRumor,
     addSan,
     applyDeltas,
     cash,
@@ -85,6 +87,23 @@ const StrollView: React.FC = () => {
     if (type === 'property') return '地产情报';
     if (type === 'location') return '地点情报';
     return '物资情报';
+  };
+
+  const pickAIRumor = (locationName: string) => {
+    if (aiRumors.length === 0) return null;
+    const preferredTypes: Record<string, Message['type'][]> = {
+      证券交易所: ['finance', 'metal'],
+      银行: ['finance', 'property'],
+      医院: ['material'],
+      黑市: ['finance', 'metal', 'material', 'location'],
+      图书馆: ['location', 'property'],
+      公司: ['finance', 'material'],
+      政府大楼: ['property', 'location'],
+    };
+    const types = preferredTypes[locationName] || [];
+    const matched = aiRumors.filter((rumor) => types.includes(rumor.type));
+    const candidates = matched.length > 0 ? matched : aiRumors;
+    return candidates[Math.floor(Math.random() * candidates.length)];
   };
 
   const buildPeaceRumor = (locationName: string, preferred?: 'item' | 'finance'): Message | null => {
@@ -174,11 +193,17 @@ const StrollView: React.FC = () => {
         setPendingOffer({ message: msg, price });
         resultStr = `黑市商人掏出一张密封情报单，开价 ¥${price}。他只肯透露：这是一条${messageTypeLabel(msg.type)}，将在 ${msg.triggerDate} 左右应验。`;
       }
-    } else if (rand < 0.25) {
-      const msg = buildPeaceRumor(location.name);
+    } else if (rand < 0.25 || aiRumors.length > 0) {
+      const aiRumor = pickAIRumor(location.name);
+      const msg = aiRumor || buildPeaceRumor(location.name);
       if (msg) {
         addMessage(msg);
-        resultStr = `你在${location.name}获得了一条小道消息（仅本轮回有效）。`;
+        if (aiRumor) {
+          consumeAIRumor(aiRumor.id);
+        }
+        resultStr = aiRumor
+          ? `你在${location.name}打听到一条传闻：${msg.text}`
+          : `你在${location.name}获得了一条小道消息（仅本轮回有效）。`;
       } else {
         resultStr = `你在${location.name}听到一些传闻，但不够可靠。`;
       }

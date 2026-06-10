@@ -71,6 +71,12 @@ const calcFinancePrices = (date: string): Record<string, number> => {
   return prices;
 };
 
+const applyPriceMultipliers = (prices: Record<string, number>, multipliers: Record<string, number>) =>
+  Object.fromEntries(Object.entries(prices).map(([id, price]) => [
+    id,
+    Math.max(1, Math.round(price * (multipliers[id] || 1))),
+  ]));
+
 const DOOMSDAY_LOCATION_HINTS = [
   { id: 'east_fuel', name: '城东加油站', itemId: 'fuel' },
   { id: 'north_hardware', name: '北区五金仓库', itemId: 'materials' },
@@ -349,6 +355,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   itemPrices: calcItemPrices(INITIAL_DATE),
   financeHoldings: {},
   financePrices: calcFinancePrices(INITIAL_DATE),
+  aiItemMultipliers: {},
+  aiFinanceMultipliers: {},
+  aiEvents: [],
+  aiRumors: [],
+  aiDmTitle: '',
+  aiDmBriefing: '',
   archivedMessages: [],
   currentMessages: [],
   usedMemoryLocationIds: [],
@@ -391,8 +403,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const nextDate = getNextDate(date);
     const nextTime = 8;
     const newBalanceCooldown = Math.max(0, balanceExerciseCooldown - 1);
-    const nextPrices = calcItemPrices(nextDate);
-    const nextFinancePrices = calcFinancePrices(nextDate);
+      const nextPrices = applyPriceMultipliers(calcItemPrices(nextDate), get().aiItemMultipliers);
+      const nextFinancePrices = applyPriceMultipliers(calcFinancePrices(nextDate), get().aiFinanceMultipliers);
     const nextSan = get().san;
     const shelter = getPrimaryProperty(inventory.properties);
     
@@ -648,7 +660,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     const bag = st.eventBag.length > 0 ? [...st.eventBag] : buildEventBag();
     const kind = bag.shift() as EventKind;
-    const candidates = DOOMSDAY_EVENTS.filter((e) => e.kind === kind && e.source === source);
+    const candidates = [...DOOMSDAY_EVENTS, ...st.aiEvents].filter((e) => e.kind === kind && e.source === source);
     if (candidates.length === 0) {
       set({ eventBag: bag });
       return;
@@ -799,8 +811,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         ...patch,
         date: nextDate,
         time: nextTime,
-        itemPrices: calcItemPrices(nextDate),
-        financePrices: calcFinancePrices(nextDate),
+        itemPrices: applyPriceMultipliers(calcItemPrices(nextDate), state.aiItemMultipliers),
+        financePrices: applyPriceMultipliers(calcFinancePrices(nextDate), state.aiFinanceMultipliers),
         isDoomsday: derivedDoomsday,
       };
     });
@@ -1050,6 +1062,44 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
   },
 
+  applyAIDMWorld: (world) => {
+    set((state) => ({
+      aiItemMultipliers: world.itemMultipliers,
+      aiFinanceMultipliers: world.financeMultipliers,
+      aiEvents: world.events,
+      aiRumors: world.rumors,
+      aiDmTitle: world.title,
+      aiDmBriefing: world.briefing,
+      itemPrices: applyPriceMultipliers(calcItemPrices(state.date), world.itemMultipliers),
+      financePrices: applyPriceMultipliers(calcFinancePrices(state.date), world.financeMultipliers),
+      logs: [{
+        id: Math.random().toString(36).slice(2, 11),
+        date: state.date,
+        time: state.time,
+        text: `【命运低语】${world.title}：${world.briefing}`,
+      }, ...state.logs],
+    }));
+  },
+
+  clearAIDMWorld: () => {
+    set((state) => ({
+      aiItemMultipliers: {},
+      aiFinanceMultipliers: {},
+      aiEvents: [],
+      aiRumors: [],
+      aiDmTitle: '',
+      aiDmBriefing: '',
+      itemPrices: calcItemPrices(state.date),
+      financePrices: calcFinancePrices(state.date),
+    }));
+  },
+
+  consumeAIRumor: (rumorId: string) => {
+    set((state) => ({
+      aiRumors: state.aiRumors.filter((rumor) => rumor.id !== rumorId),
+    }));
+  },
+
   die: (reason: string) => {
     set({ isDead: true, deathReason: reason });
   },
@@ -1074,6 +1124,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       itemPrices: calcItemPrices(INITIAL_DATE),
       financeHoldings: {},
       financePrices: calcFinancePrices(INITIAL_DATE),
+      aiItemMultipliers: {},
+      aiFinanceMultipliers: {},
+      aiEvents: [],
+      aiRumors: [],
+      aiDmTitle: '',
+      aiDmBriefing: '',
       archivedMessages: state.currentMessages.filter(m => m.source === 'doomsday'),
       currentMessages: [],
       usedMemoryLocationIds: [],

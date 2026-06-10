@@ -1,4 +1,5 @@
 import type { ActiveRandomEvent, Delta, EventSource, EventKind } from './randomEvent';
+import type { AIDMWorld } from './aiDm';
 
 export interface Message {
   id: string;
@@ -101,6 +102,12 @@ export interface GameState {
   itemPrices: Record<string, number>;
   financeHoldings: Record<string, FinancialHolding>;
   financePrices: Record<string, number>;
+  aiItemMultipliers: Record<string, number>;
+  aiFinanceMultipliers: Record<string, number>;
+  aiEvents: ActiveRandomEvent['def'][];
+  aiRumors: Message[];
+  aiDmTitle: string;
+  aiDmBriefing: string;
 
   // Messages
   archivedMessages: Message[]; // from past lives
@@ -150,6 +157,9 @@ export interface GameState {
   addMessage: (msg: Message) => void;
   addLog: (text: string) => void;
   markMemoryLocationUsed: (locationId: string) => void;
+  applyAIDMWorld: (world: AIDMWorld) => void;
+  clearAIDMWorld: () => void;
+  consumeAIRumor: (rumorId: string) => void;
   setHasExercisedToday: (val: boolean) => void;
   setBalanceExerciseCooldown: (val: number) => void;
   applyDeveloperState: (patch: {
