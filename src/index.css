@@ -277,7 +277,32 @@ body {
   letter-spacing: 0.12em;
 }
 
-.ai-setup-key input {
+.ai-provider-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.ai-provider-grid button {
+  border: 1px solid #3f3f46;
+  background: rgba(24, 24, 27, 0.82);
+  color: #d4d4d8;
+  padding: 9px 6px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  transition: 160ms ease;
+}
+
+.ai-provider-grid button.active,
+.ai-provider-grid button:not(:disabled):hover {
+  border-color: #c4b5fd;
+  background: rgba(88, 28, 135, 0.45);
+  color: #fff;
+}
+
+.ai-setup-key input,
+.ai-setup-key select {
   width: 100%;
   border: 1px solid #52525b;
   background: #050505;

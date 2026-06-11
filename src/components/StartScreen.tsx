@@ -12,7 +12,12 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import type { AIDMConnection } from '../lib/aiDm';
+import {
+  AI_DM_PROVIDER_CANDIDATES,
+  AI_DM_PROVIDER_NAMES,
+  type AIDMConnection,
+  type AIDMProvider,
+} from '../lib/aiDm';
 
 type Panel = 'menu' | 'guide' | 'settings' | 'ai-setup';
 
@@ -57,8 +62,13 @@ export default function StartScreen({ hasSave, onNewGame, onContinue }: StartScr
   const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem('rebirth-sound') !== 'off');
   const [largeText, setLargeText] = useState(() => localStorage.getItem('rebirth-large-text') === 'on');
   const [apiKey, setApiKey] = useState('');
+  const [provider, setProvider] = useState<AIDMProvider>('DeepSeek');
+  const [model, setModel] = useState('deepseek-chat');
+  const [baseUrl, setBaseUrl] = useState('');
   const [starting, setStarting] = useState(false);
   const [startStatus, setStartStatus] = useState('');
+  const selectedProvider = AI_DM_PROVIDER_CANDIDATES.find((candidate) => candidate.provider === provider);
+  const availableModels = selectedProvider?.models || [];
 
   useEffect(() => {
     document.documentElement.classList.toggle('rebirth-large-text', largeText);
@@ -166,13 +176,60 @@ export default function StartScreen({ hasSave, onNewGame, onContinue }: StartScr
             </button>
             <div className="start-panel-heading">
               <BrainCircuit size={20} />
-              <div><small>STORY MODE</small><h2>启用 AI DM？</h2></div>
+              <div><small>STORY MODE</small><h2>启用命运编织？</h2></div>
             </div>
             <p className="ai-setup-copy">
-              只需输入 API 密钥。系统会根据密钥格式安全识别 AI 服务与可用模型，再为本轮游戏编织世界线与第一人称叙事。
+              可选接入外部编织器，为本轮游戏生成世界线、传闻和第一人称叙事。不启用则按原本规则开始。
             </p>
+            <div className="ai-provider-grid">
+              {AI_DM_PROVIDER_NAMES.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  disabled={starting}
+                  onClick={() => {
+                    setProvider(name);
+                    setModel(AI_DM_PROVIDER_CANDIDATES.find((candidate) => candidate.provider === name)?.models[0] || '');
+                    setBaseUrl('');
+                  }}
+                  className={provider === name ? 'active' : ''}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
             <label className="ai-setup-key">
-              API Key
+              选择 AI 模型
+              {availableModels.length > 0 ? (
+                <select value={model} onChange={(event) => setModel(event.target.value)} disabled={starting}>
+                  {availableModels.map((name) => <option key={name} value={name}>{name}</option>)}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={model}
+                  onChange={(event) => setModel(event.target.value)}
+                  placeholder={provider === '豆包' ? '填写火山方舟接入点 ID' : '填写模型名'}
+                  autoComplete="off"
+                  disabled={starting}
+                />
+              )}
+            </label>
+            {provider === '自定义兼容接口' && (
+              <label className="ai-setup-key">
+                API Base URL
+                <input
+                  type="url"
+                  value={baseUrl}
+                  onChange={(event) => setBaseUrl(event.target.value)}
+                  placeholder="https://example.com/v1"
+                  autoComplete="off"
+                  disabled={starting}
+                />
+              </label>
+            )}
+            <label className="ai-setup-key">
+              世界编织密钥
               <input
                 type="password"
                 value={apiKey}
@@ -186,21 +243,25 @@ export default function StartScreen({ hasSave, onNewGame, onContinue }: StartScr
             <button
               type="button"
               className="doom-enter ai-setup-primary"
-              disabled={starting || !apiKey.trim()}
+              disabled={starting || !apiKey.trim() || !model.trim()}
               onClick={async () => {
                 setStarting(true);
-                setStartStatus('正在识别可用模型并编织世界线……');
+                setStartStatus('正在连接编织器并生成世界线……');
                 try {
                   await onNewGame({
                     apiKey: apiKey.trim(),
+                    provider,
+                    model: model.trim(),
+                    baseUrl: baseUrl.trim() || undefined,
+                    protocol: provider === '自定义兼容接口' ? 'chat' : undefined,
                   });
                 } catch (error) {
-                  setStartStatus(error instanceof Error ? error.message : 'AI DM 启动失败，请检查密钥后重试。');
+                  setStartStatus(error instanceof Error ? error.message : '命运编织启动失败，请检查密钥后重试。');
                   setStarting(false);
                 }
               }}
             >
-              {starting ? <><LoaderCircle size={16} className="animate-spin" /> 正在开始</> : '启用 AI DM 并开始'}
+              {starting ? <><LoaderCircle size={16} className="animate-spin" /> 正在开始</> : '启用命运编织并开始'}
             </button>
             <button
               type="button"

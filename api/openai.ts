@@ -1,4 +1,17 @@
-const readBody = async (req: any) => {
+type RequestLike = AsyncIterable<Buffer | Uint8Array | string> & {
+  body?: unknown;
+  method?: string;
+};
+
+type ResponseLike = {
+  status: (code: number) => ResponseLike;
+  json: (body: unknown) => void;
+  setHeader: (name: string, value: string) => void;
+  send: (body: string) => void;
+  end: () => void;
+};
+
+const readBody = async (req: RequestLike) => {
   if (req.body) return typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
   const chunks: Buffer[] = [];
   for await (const chunk of req) chunks.push(Buffer.from(chunk));
@@ -6,7 +19,7 @@ const readBody = async (req: any) => {
   return raw ? JSON.parse(raw) : {};
 };
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: RequestLike, res: ResponseLike) {
   if (req.method === 'OPTIONS') {
     res.status(204).end();
     return;
@@ -18,7 +31,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { kind, apiKey, baseUrl = 'https://api.openai.com/v1', body } = await readBody(req);
+    const { kind, apiKey, baseUrl = 'https://api.openai.com/v1', model, body } = await readBody(req);
     if (!apiKey || typeof apiKey !== 'string') {
       res.status(400).json({ error: 'Missing API key' });
       return;
@@ -51,6 +64,24 @@ export default async function handler(req: any, res: any) {
                   body: JSON.stringify(body || {}),
                 },
               }
+            : kind === 'anthropic'
+              ? {
+                  url: `${parsedBase}/messages`,
+                  init: {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body || {}),
+                  },
+                }
+              : kind === 'gemini'
+                ? {
+                    url: `${parsedBase}/models/${encodeURIComponent(String(model || ''))}:generateContent`,
+                    init: {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(body || {}),
+                    },
+                  }
             : null;
 
     if (!target) {
@@ -62,7 +93,11 @@ export default async function handler(req: any, res: any) {
       ...target.init,
       headers: {
         ...(target.init.headers || {}),
-        Authorization: `Bearer ${apiKey}`,
+        ...(kind === 'anthropic'
+          ? { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }
+          : kind === 'gemini'
+            ? { 'x-goog-api-key': apiKey }
+            : { Authorization: `Bearer ${apiKey}` }),
       },
     });
 

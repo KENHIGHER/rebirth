@@ -2,8 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from "vite-tsconfig-paths";
 import { traeBadgePlugin } from 'vite-plugin-trae-solo-badge';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 
-const readRequestBody = async (req: any) => {
+const readRequestBody = async (req: IncomingMessage) => {
   const chunks: Buffer[] = [];
   for await (const chunk of req) chunks.push(Buffer.from(chunk));
   const raw = Buffer.concat(chunks).toString('utf8');
@@ -12,15 +13,15 @@ const readRequestBody = async (req: any) => {
 
 const openAIProxyPlugin = () => ({
   name: 'rebirth-openai-proxy',
-  configureServer(server: any) {
-    server.middlewares.use('/api/openai', async (req: any, res: any) => {
+  configureServer(server: { middlewares: { use: (path: string, handler: (req: IncomingMessage, res: ServerResponse) => void | Promise<void>) => void } }) {
+    server.middlewares.use('/api/openai', async (req: IncomingMessage, res: ServerResponse) => {
       if (req.method !== 'POST') {
         res.statusCode = 405;
         res.end(JSON.stringify({ error: 'Method not allowed' }));
         return;
       }
       try {
-        const { kind, apiKey, baseUrl = 'https://api.openai.com/v1', body } = await readRequestBody(req);
+        const { kind, apiKey, baseUrl = 'https://api.openai.com/v1', model, body } = await readRequestBody(req);
         if (!apiKey) {
           res.statusCode = 400;
           res.end(JSON.stringify({ error: 'Missing API key' }));
@@ -54,6 +55,24 @@ const openAIProxyPlugin = () => ({
                       body: JSON.stringify(body || {}),
                     },
                   }
+                : kind === 'anthropic'
+                  ? {
+                      url: `${parsedBase}/messages`,
+                      init: {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body || {}),
+                      },
+                    }
+                  : kind === 'gemini'
+                    ? {
+                        url: `${parsedBase}/models/${encodeURIComponent(String(model || ''))}:generateContent`,
+                        init: {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(body || {}),
+                        },
+                      }
                 : null;
         if (!target) {
           res.statusCode = 400;
@@ -64,7 +83,11 @@ const openAIProxyPlugin = () => ({
           ...target.init,
           headers: {
             ...(target.init.headers || {}),
-            Authorization: `Bearer ${apiKey}`,
+            ...(kind === 'anthropic'
+              ? { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' }
+              : kind === 'gemini'
+                ? { 'x-goog-api-key': apiKey }
+                : { Authorization: `Bearer ${apiKey}` }),
           },
         });
         const text = await response.text();
