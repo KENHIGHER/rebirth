@@ -211,8 +211,8 @@ function App() {
   };
 
   return (
-    <div className="h-screen bg-zinc-950 text-zinc-300 flex flex-col max-w-md mx-auto border-x border-zinc-800 overflow-hidden">
-      <header className="h-[68px] shrink-0 bg-zinc-900 border-b border-zinc-800 p-1.5 text-[11px] flex flex-col justify-center">
+    <div className="game-shell h-screen bg-zinc-950 text-zinc-300 flex flex-col max-w-md mx-auto border-x border-zinc-800 overflow-hidden">
+      <header className="game-header h-[68px] shrink-0 bg-zinc-900 border-b border-zinc-800 p-1.5 text-[11px] flex flex-col justify-center">
         <div className="flex justify-between items-center mb-1">
           <div className="flex items-center gap-1 text-zinc-400">
             <RefreshCcw size={12} /> {glitch('轮回')}: {num} | <Calendar size={12} /> {date} | <Clock size={12} /> {time}:00
@@ -286,12 +286,12 @@ function App() {
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-hidden bg-zinc-950 p-3">
+      <main className="game-main min-h-0 flex-1 overflow-hidden bg-zinc-950 p-3">
         {renderContent()}
       </main>
 
       {isDoomsday ? (
-        <footer className="shrink-0 bg-black border-t border-red-900 p-1.5 grid grid-cols-5 gap-1.5 text-xs relative">
+        <footer className="game-footer shrink-0 bg-black border-t border-red-900 p-1.5 grid grid-cols-5 gap-1.5 text-xs relative">
           <div className="absolute inset-0 pointer-events-none border-t border-red-900 opacity-50 shadow-[0_-5px_15px_rgba(220,38,38,0.2)]" />
           <button onClick={() => setCurrentView('explore')} className={`py-2 rounded font-bold ${currentView === 'explore' ? 'bg-red-900 text-white' : 'bg-zinc-900 text-red-500 hover:bg-zinc-800 border border-red-900/50'}`}>{glitch('外出探索')}</button>
           <button onClick={() => setCurrentView('property')} className={`py-2 rounded font-bold ${currentView === 'property' ? 'bg-red-900 text-white' : 'bg-zinc-900 text-red-500 hover:bg-zinc-800 border border-red-900/50'}`}>{glitch('安全屋')}</button>
@@ -300,7 +300,7 @@ function App() {
           <button onClick={() => sleep()} className="py-2 rounded bg-red-950 hover:bg-red-900 text-white font-bold border border-red-800">{glitch('下一日')}</button>
         </footer>
       ) : (
-        <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-1.5 grid grid-cols-4 gap-1.5 text-xs">
+        <footer className="game-footer shrink-0 bg-zinc-900 border-t border-zinc-800 p-1.5 grid grid-cols-4 gap-1.5 text-xs">
           <button onClick={() => setCurrentView('home')} className={`py-1.5 rounded ${currentView === 'home' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('主页')}</button>
           <button onClick={() => setCurrentView('trade')} className={`py-1.5 rounded ${currentView === 'trade' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('交易')}</button>
           <button onClick={() => setCurrentView('backpack')} className={`py-1.5 rounded ${currentView === 'backpack' ? 'bg-zinc-700 text-white' : 'bg-zinc-800 hover:bg-zinc-700'}`}>{glitch('背包')}</button>
